@@ -38,3 +38,17 @@ def test_function_output_with_snapshot(snapshot):
     pierino_stringa=str(pierino)
     snapshot.assert_match(pierino_stringa, 'foo_output.txt')
 
+
+# ritorniamo un insieme di dati grande piuttosto che un numero
+
+frutti = """
+frutti,prezzo,colore,sapore
+pera,100,rosso,buone
+mela,10,giallo,squisita
+ananas,23,verde,piccante
+"""
+
+def test_function_output_with_snapshot(snapshot):
+    snapshot.snapshot_dir = 'snapshots'  
+    snapshot.assert_match(frutti, 'frutti.csv')
+
