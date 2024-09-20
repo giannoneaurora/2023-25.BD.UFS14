@@ -1,3 +1,5 @@
+# json schema
+
 from jsonschema import validate
 
 schema = {
@@ -25,4 +27,14 @@ def validate_wrapper(instance, schema):
         return False
 
 
+# snapshot
+
+def func(x):
+    return x + 1
+
+def test_function_output_with_snapshot(snapshot):
+    snapshot.snapshot_dir = 'snapshots'  
+    pierino=func(5)
+    pierino_stringa=str(pierino)
+    snapshot.assert_match(pierino_stringa, 'foo_output.txt')
 

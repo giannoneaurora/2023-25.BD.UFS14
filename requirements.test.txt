@@ -1,0 +1,2 @@
+# contiene le dipendenze ip che il mio programma utilizza al di fuori dei test
+pytest-snapshot==0.9.0
