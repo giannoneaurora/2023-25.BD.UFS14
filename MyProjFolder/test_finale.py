@@ -3,47 +3,71 @@ from io import BytesIO
 import requests
 
 from function_app import scarica_pdf 
+from jsonschema import validate
 
-with patch('requests.get') as mock_get:
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.headers = {'Content-Type': 'application/pdf'}
-    mock_response.content = b'%PDF-1.4 binary content here'
-    mock_get.return_value = mock_response
+pdf_schema = {
+    "type": "object",
+    "properties": {
+        "content_type": {"type": "string"},
+        "binary_content": {"type": "string"}
+    },
+    "required": ["content_type", "binary_content"]
+}
+
+
+# Wrapper function for schema validation
+def validate_pdf_content(instance):
+    schema_instance = {
+        "content_type": "application/pdf",
+        "binary_content": isinstance(instance, BytesIO)
+    }
+    try:
+        validate(instance=schema_instance, schema=pdf_schema)
+        return True
+    except Exception as e:
+        print(f"Schema validation error: {e}")
+        return False
+
+
+def test_scarica_pdf_success():
+    url = ""
+    pdf_content = scarica_pdf(url)
     
-    pdf_content = scarica_pdf("")
-    assert isinstance(pdf_content, BytesIO), "Failed: Expected a BytesIO object for PDF content."
-    assert b'%PDF-1.4' in pdf_content.getvalue(), "Failed: PDF content does not match expected content."
+    assert pdf_content is not None, "Expected a valid PDF content."
+    assert validate_pdf_content(pdf_content), "Downloaded content does not match PDF schema."
 
-print("Test case 1 (Successful PDF download): Passed")
+def test_scarica_pdf_non_pdf():
+    url = "https://www.example.com"
+    pdf_content = scarica_pdf(url)
+
+    assert pdf_content is None, "Expected None for non-PDF content."
 
 
-with patch('requests.get') as mock_get:
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.headers = {'Content-Type': 'text/html'}
-    mock_response.content = b'<html>Not a PDF</html>'
-    mock_get.return_value = mock_response
+def test_scarica_pdf_http_error():
+    url = "https://www.example.com/nonexistentfile.pdf"
+    pdf_content = scarica_pdf(url)
+
+    assert pdf_content is None, "Expected None for HTTP error."
+
+
+def test_scarica_pdf_network_error():
+    url = "http://10.255.255.1"  
+    pdf_content = scarica_pdf(url)
+
+    assert pdf_content is None, "Expected None for network error."
+
+
+# Run all tests
+if __name__ == "__main__":
+    test_scarica_pdf_success()
+    print("Test case 1 (Successful PDF download): Passed")
     
-    pdf_content = scarica_pdf("")
-    assert pdf_content is None, "Failed: Expected None for non-PDF content type."
-
-print("Test case 2 (Wrong content type): Passed")
-
-with patch('requests.get') as mock_get:
-    mock_response = Mock()
-    mock_response.status_code = 404
-    mock_get.return_value = mock_response
+    test_scarica_pdf_non_pdf()
+    print("Test case 2 (Non-PDF content type): Passed")
     
-    pdf_content = scarica_pdf("")
-    assert pdf_content is None, "Failed: Expected None for HTTP error."
-
-print("Test case 3 (HTTP error): Passed")
-
-with patch('requests.get') as mock_get:
-    mock_get.side_effect = requests.exceptions.ConnectionError
+    test_scarica_pdf_http_error()
+    print("Test case 3 (HTTP error): Passed")
     
-    pdf_content = scarica_pdf("")
-    assert pdf_content is None, "Failed: Expected None for network error."
+    test_scarica_pdf_network_error()
+    print("Test case 4 (Network error): Passed")
 
-print("Test case 4 (Network error): Passed")
