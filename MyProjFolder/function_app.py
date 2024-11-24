@@ -7,38 +7,35 @@ app = func.FunctionApp()
 def MyHttpTrigger(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    def main():
-        notes = []  # Lista per salvare le note
+    azione = req.params.get('azione')  
+    indice = req.params.get('indice da 1 a 6')  
+    note_content = req.params.get('nota')  
+    search_term = req.params.get('cerca')  
 
-        while True:
-            print("\n=== 📝 Blocco Note ===")
-            print("1.  Aggiungi nota")
-            print("2.  Vedi note")
-            print("3.  Modifica nota")
-            print("4.  Elimina note")
-            print("5.  Cerca")
-            print("6.  Esci")
+    if azione == 'aggiungi' and note_content:
+        return func.HttpResponse(aggiungi_nota(note_content), status_code=200)
+    elif azione == 'visualizza':
+        return func.HttpResponse(visualizza_note(), status_code=200)
+    elif azione == 'modifica' and indice and note_content:
+        try:
+            index = int(indice) - 1 
+            return func.HttpResponse(modifica_nota(indice, note_content), status_code=200)
+        except ValueError:
+            return func.HttpResponse("Indice non valido", status_code=400)
+    elif azione == 'elimina' and indice:
+        try:
+            indice = int(indice) - 1  
+            return func.HttpResponse(elimina_nota(indice), status_code=200)
+        except ValueError:
+            return func.HttpResponse("Indice non valido", status_code=400)
+    elif azione == 'cerca' and search_term:
+        return func.HttpResponse(cerca_note(search_term), status_code=200)
 
-            scelta = input("\nCosa vuoi fare? (1-6): ")
-
-            if scelta == '1':
-                aggiungi_note(notes)
-            elif scelta == '2':
-                visualizza_note(notes)
-            elif scelta == '3':
-                modifica_note(notes)
-            elif scelta == '4':
-                elimina_note(notes)
-            elif scelta == '5':
-                cerca_note(notes)
-            elif scelta == '6':
-                print("\nArrivederci")
-                break
-            else:
-                print("Scelta non valida")
-
-    if __name__ == "__main__":
-        main()
+    else:
+        return func.HttpResponse(
+            "Azioni disponibili: aggiungi, visualizza, modifica, elimina, cerca. Passa i parametri necessari.",
+            status_code=400
+        )
 
     name = req.params.get('name')
     cognome = req.params.get('cognome')
