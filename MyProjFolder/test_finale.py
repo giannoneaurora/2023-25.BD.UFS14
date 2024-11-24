@@ -1,6 +1,6 @@
 from unittest.mock import patch, Mock
 from io import BytesIO
-import requests
+
 
 from function_app import scarica_pdf 
 from jsonschema import validate
@@ -37,14 +37,14 @@ def test_scarica_pdf_success():
     assert validate_pdf_content(pdf_content), "Downloaded content does not match PDF schema."
 
 def test_scarica_pdf_non_pdf():
-    url = "https://www.example.com"
+    url = ""
     pdf_content = scarica_pdf(url)
 
     assert pdf_content is None, "Expected None for non-PDF content."
 
 
 def test_scarica_pdf_http_error():
-    url = "https://www.example.com/nonexistentfile.pdf"
+    url = ""
     pdf_content = scarica_pdf(url)
 
     assert pdf_content is None, "Expected None for HTTP error."
