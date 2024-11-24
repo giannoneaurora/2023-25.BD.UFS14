@@ -1,73 +1,82 @@
-from unittest.mock import patch, Mock
-from io import BytesIO
-
-
-from function_app import scarica_pdf 
 from jsonschema import validate
+from io import StringIO
+from unittest.mock import patch
+from main import aggiungi_note, visualizza_note, elimina_note, modifica_note, cerca_note
 
-pdf_schema = {
-    "type": "object",
-    "properties": {
-        "content_type": {"type": "string"},
-        "binary_content": {"type": "string"}
-    },
-    "required": ["content_type", "binary_content"]
+notes_schema = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "array",  
+    "items": {
+        "type": "object",  
+        "properties": {
+            "id": {
+                "type": "string",  
+                "pattern": "^[a-f0-9-]{36}$"  
+            },
+            "content": {
+                "type": "string",
+                "minLength": 1  
+            },
+        },
+        "required": ["id", "content"], 
+        "additionalProperties": False  
+    }
 }
 
-
-# Wrapper function for schema validation
-def validate_pdf_content(instance):
-    schema_instance = {
-        "content_type": "application/pdf",
-        "binary_content": isinstance(instance, BytesIO)
-    }
+def validate_wrapper(notes):
     try:
-        validate(instance=schema_instance, schema=pdf_schema)
+        validate(instance=notes, schema=notes_schema)
         return True
     except Exception as e:
         print(f"Schema validation error: {e}")
         return False
 
-
-def test_scarica_pdf_success():
-    url = ""
-    pdf_content = scarica_pdf(url)
+def test_aggiungi_note():
+    notes = []  
+    nuova_nota = "New note"
     
-    assert pdf_content is not None, "Expected a valid PDF content."
-    assert validate_pdf_content(pdf_content), "Downloaded content does not match PDF schema."
-
-def test_scarica_pdf_non_pdf():
-    url = ""
-    pdf_content = scarica_pdf(url)
-
-    assert pdf_content is None, "Expected None for non-PDF content."
-
-
-def test_scarica_pdf_http_error():
-    url = ""
-    pdf_content = scarica_pdf(url)
-
-    assert pdf_content is None, "Expected None for HTTP error."
-
-
-def test_scarica_pdf_network_error():
-    url = "http://10.255.255.1"  
-    pdf_content = scarica_pdf(url)
-
-    assert pdf_content is None, "Expected None for network error."
-
-
-# Run all tests
-if __name__ == "__main__":
-    test_scarica_pdf_success()
-    print("Test case 1 (Successful PDF download): Passed")
+    with patch('builtins.input', return_value=nuova_nota):
+        aggiungi_note(notes)
     
-    test_scarica_pdf_non_pdf()
-    print("Test case 2 (Non-PDF content type): Passed")
-    
-    test_scarica_pdf_http_error()
-    print("Test case 3 (HTTP error): Passed")
-    
-    test_scarica_pdf_network_error()
-    print("Test case 4 (Network error): Passed")
+    assert len(notes) == 1  
+    assert notes[-1]['content'] == nuova_nota 
 
+def test_visualizza_note(capsys):
+    notes = ["Prima nota"]  
+
+    with patch('builtins.input', return_value=""):
+        visualizza_note(notes)
+    
+    captured = capsys.readouterr()
+    assert 'Prima nota' in captured.out  
+
+def test_modifica_note():
+    notes = [{"id": "1", "content": "Nota 1"}]  
+    nota_modificata = "Modified first note"
+    
+    with patch('builtins.input', side_effect=["1", nota_modificata]):
+        modifica_note(notes)
+    
+    assert notes[0]['content'] == nota_modificata  
+
+def test_cerca_note_found():
+    notes = [{"id": "1", "content": "This is a special note"}, 
+             {"id": "2", "content": "Another generic note"}]
+    
+    search_term = "special"
+    with patch('builtins.input', return_value=search_term), patch('sys.stdout', new_callable=StringIO) as mocked_stdout:
+        cerca_note(notes)
+
+    output = mocked_stdout.getvalue().strip()
+    assert "Risultati della ricerca:" in output
+    assert "Nessuna nota trovata" not in output
+
+def test_elimina_note():
+    notes = ["nota1", "nota2"]
+    
+    with patch('builtins.input', side_effect=["1", "s"]):
+        with patch('sys.stdout', new_callable=StringIO) as captured_output:
+             elimina_note(notes)
+
+    output = captured_output.getvalue().strip()
+    assert len(notes) == 1  

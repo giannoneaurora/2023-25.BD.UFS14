@@ -1,5 +1,4 @@
 import azure.functions as func
-import datetime
 import json
 import logging
 
@@ -9,25 +8,38 @@ app = func.FunctionApp()
 def MyHttpTrigger(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-import requests
-from io import BytesIO
+    def main():
+        notes = []  # Lista per salvare le note
 
-def scarica_pdf(url):
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            if 'application/pdf' in response.headers.get('Content-Type', ''):
-                contenuto_pdf_binario = BytesIO(response.content)
-                return contenuto_pdf_binario
+        while True:
+            print("\n=== 📝 Blocco Note ===")
+            print("1.  Aggiungi nota")
+            print("2.  Vedi note")
+            print("3.  Modifica nota")
+            print("4.  Elimina note")
+            print("5.  Cerca")
+            print("6.  Esci")
+
+            scelta = input("\nCosa vuoi fare? (1-6): ")
+
+            if scelta == '1':
+                aggiungi_note(notes)
+            elif scelta == '2':
+                visualizza_note(notes)
+            elif scelta == '3':
+                modifica_note(notes)
+            elif scelta == '4':
+                elimina_note(notes)
+            elif scelta == '5':
+                cerca_note(notes)
+            elif scelta == '6':
+                print("\nArrivederci")
+                break
             else:
-                print(f"Il contenuto scaricato da {url} non è un PDF.")
-                return None
-        else:
-            print(f"Impossibile scaricare il PDF da {url}. Codice di stato: {response.status_code}")
-            return None
-    except requests.exceptions.RequestException as e:
-        print(f"Si è verificato un errore di rete: {e}")
-        return None
+                print("Scelta non valida")
+
+    if __name__ == "__main__":
+        main()
 
     name = req.params.get('name')
     cognome = req.params.get('cognome')
@@ -44,6 +56,6 @@ def scarica_pdf(url):
             return func.HttpResponse(f"Hello, {name} {cognome}. This HTTP triggered function executed successfully.")
     else:
         return func.HttpResponse(
-             "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-             status_code=200
+            "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
+            status_code=200
         )
