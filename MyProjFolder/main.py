@@ -1,77 +1,56 @@
-notes = []
+import pandas as pd
+import os
 
-import uuid
+data = {
+    "ID": [1, 2, 3],
+    "Nota": ["Questa è la prima nota", "Seconda nota di esempio", "Terza nota importante"]
+}
+notes_df = pd.DataFrame(data)
 
-def aggiungi_note(notes):
-    nota = input("Scrivi la tua nota: ")
-    if nota.strip():  # Ensure the note is not empty
-        note_dict = {"id": str(uuid.uuid4()), "content": nota}
-        notes.append(note_dict)  # Append the note as a dictionary
-        print("Hai aggiunto una nota.")
-    else:
-        print("La nota non può essere vuota.")
-def visualizza_note(notes):
-    if len(notes) == 0:
-        print("Non ci sono note salvate.")
-        return
-    print("\nLe tue note:")
-    for i, note in enumerate(notes, 1):
-        print(f"{i}. {note}")
-    print()
+path = "note.csv"
 
-def modifica_note(notes):
-    if not notes:
-        return
-    try:
-        index = int(input("Quale nota vuoi modificare? (inserisci il numero): ")) - 1
-        if index >= 0 and index < len(notes):
-            new_note = input("Scrivi la nuova nota: ")
-            if new_note.strip():
-                notes[index]['content'] = new_note
-                print("Modifica aggiunta correttamente")
-            else:
-                print("La nota non può essere vuota")
-        else:
-            print("Numero non valido")
-    except ValueError:
-        print("Devi inserire un numero")
+if os.path.exists(path):
+    notes_df = pd.read_csv(path)
 
-def cerca_note(notes):
-    """Cerca tra le note"""
-    if not notes:
-        print("Non ci sono note salvate.")
-        return
+def save_notes_to_file(notes_df, path):
+    notes_df.to_csv(path, index=False)
 
-    search = input("Cerca una nota").lower()
-    found = False
-    print("\nRisultati della ricerca:")
+def get_all_notes():
+    return notes_df.to_dict(orient="records")
 
-    for i, note in enumerate(notes, 1):
-        if search in note['content'].lower():  # Check within the note content
-            print(f"{i}. {note['content']}")
-            found = True
+def cerca_note(id_param=None, text_param=None):
+    filtered_notes = notes_df
+    if id_param:
+        try:
+            filtered_notes = filtered_notes[filtered_notes["ID"] == int(id_param)]
+        except ValueError:
+            return {"error": "Il parametro ID deve essere un numero."}
+    if text_param:
+        filtered_notes = filtered_notes[filtered_notes["Nota"].str.contains(text_param, case=False, na=False)]
+    if filtered_notes.empty:
+        return {"error": "Nessuna nota trovata."}
+    return filtered_notes.to_dict(orient="records")
 
-    if not found:
-        print("Nessuna nota trovata")
-    print()
+def aggiungi_note(note_text):
+    global notes_df
+    new_id = notes_df["ID"].max() + 1 if not notes_df.empty else 1
+    new_note = {"ID": new_id, "Nota": note_text}
+    notes_df = pd.concat([notes_df, pd.DataFrame([new_note])], ignore_index=True)
+    save_notes_to_file(notes_df, path)  # Salva la modifica
+    return {"ID": int(new_note["ID"]), "Nota": new_note["Nota"]}
 
-def elimina_note(notes):
-    visualizza_note(notes)
-    if not notes:
-        return
+def modifica_note(note_id, new_text):
+    global notes_df
+    if note_id not in notes_df["ID"].values:
+        return {"error": "Nota non trovata."}
+    notes_df.loc[notes_df["ID"] == note_id, "Nota"] = new_text
+    save_notes_to_file(notes_df, path)  # Salva la modifica
+    return {"ID": int(note_id), "Nota": new_text}
 
-    try:
-        index = int(input("Quale nota vuoi cancellare definitivamente? (inserisci il numero): ")) - 1
-        if index >= 0 and index < len(notes):
-            nota_da_cancellare = notes[index]
-            conferma = input(f"Sei sicuro di voler cancellare definitivamente questa nota? '{nota_da_cancellare}' (s/n): ").lower()
-
-            if conferma == 's':
-                del notes[index]
-                print(f"Nota cancellata")
-            else:
-                print("Cancellazione annullata")
-        else:
-            print("Numero non valido")
-    except ValueError:
-        print("Devi inserire un numero")
+def cancella_note(note_id):
+    global notes_df
+    if note_id not in notes_df["ID"].values:
+        return {"error": "Nota non trovata."}
+    notes_df = notes_df[notes_df["ID"] != note_id]
+    save_notes_to_file(notes_df, path)  # Salva la modifica
+    return {"message": f"Nota con ID {note_id} eliminata."}
