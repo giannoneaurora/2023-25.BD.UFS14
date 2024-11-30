@@ -55,41 +55,41 @@ def test_get_all_notes():
         assert validate_wrapper(note, note_schema) == True
 
 
-def test_add_note():
+def test_aggiungi_note():
     result = aggiungi_note("Nuova nota di test")
     assert validate_wrapper(result, note_schema) == True
     assert result["Nota"] == "Nuova nota di test"
 
-def test_update_note_success():
+def test_modifica_note_success():
     new_note = aggiungi_note("Nota da aggiornare")
     result = modifica_note(new_note["ID"], "Nota aggiornata")
     assert validate_wrapper(result, note_schema) == True
     assert result["Nota"] == "Nota aggiornata"
 
-def test_update_note_fail():
+def test_modifica_note_fail():
     result = modifica_note(999, "Nota inesistente")
     assert "error" in result
     assert result["error"] == "Nota non trovata."
 
-def test_delete_note_success():
+def test_cancella_note_success():
     new_note = aggiungi_note("Nota da eliminare")
     result = cancella_note(new_note["ID"])
     assert validate_wrapper(result, message_schema) == True
     assert result["message"] == f"Nota con ID {new_note['ID']} eliminata."
 
-def test_delete_note_fail():
+def test_cancella_note_fail():
     result = cancella_note(999)
     assert "error" in result
     assert result["error"] == "Nota non trovata."
 
-def test_search_notes_by_text():
+def test_cerca_note_testo():
     aggiungi_note("Nota per test ricerca testo")
     result = cerca_note(text_param="test ricerca")
     assert isinstance(result, list)
     assert len(result) > 0
     assert any("test ricerca" in note["Nota"] for note in result)
 
-def test_search_notes_by_invalid_text():
+def test_cerca_note_testo_non_valido():
     result = cerca_note(text_param="test non esistente")
     assert isinstance(result, dict)
     assert "error" in result
