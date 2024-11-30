@@ -1,5 +1,6 @@
 from jsonschema import validate
 import os
+import pandas as pd
 from main import aggiungi_note, get_all_notes, modifica_note, cancella_note, cerca_note, save_notes_to_file
 
 note_schema = {
@@ -29,8 +30,6 @@ def validate_wrapper(instance, schema):
         print(f"Schema validation error: {e}")
         return False
 
-
-'''
 def test_save_notes_to_file():
     # Crea un DataFrame di esempio per il test
     data = {'id': [1, 2, 3], 'text': ['Nota 1', 'Nota 2', 'Nota 3']}
@@ -46,7 +45,7 @@ def test_save_notes_to_file():
     pd.testing.assert_frame_equal(notes_df, saved_df), "I dati nel file non corrispondono."
 
     if os.path.exists(path):
-        os.remove(path)'''
+        os.remove(path)
 
 
 def test_get_all_notes():
