@@ -12,7 +12,39 @@ def MyHttpTrigger(req: func.HttpRequest) -> func.HttpResponse:
      # Azione da eseguire (search, add, update, delete)
     action = req.params.get("action")
     if not action:
-        return func.HttpResponse("Azione non specificata. \nUsa 'action=aggiungi', 'action=cerca', 'action=modifica', 'action=cancella', 'action=elenco'", status_code=400)
+        guida = """\nBenvenuto nel gestore note. Ecco una guida per l'utilizzo:\nAzioni disponibili:
+    1. Cerca Note
+        - Descrizione: Cerca una nota utilizzando l'ID o parte del testo.
+        - Parametri:
+            - `action=cerca` 
+            - `id=<ID della nota>` (opzionale)
+            - `text=<Testo della nota>` (opzionale)
+        - Esempio: `/MyHttpTrigger?action=cerca&id=1` , `/MyHttpTrigger?action=cerca&text=esempio`
+    2. Aggiungi Nota
+        - Descrizione: Aggiungi una nuova nota al sistema.
+        - Parametri:
+            - `action=aggiungi`
+            - `text=<Testo della nuova nota>`
+        - Esempio: `/MyHttpTrigger?action=aggiungi&text=Nuova%20nota`
+    3. Modifica Nota
+        - Descrizione: Modifica una nota esistente.
+        - Parametri:
+            - `action=modifica`
+            - `id=<ID della nota>`
+            - `text=<Nuovo testo della nota>`
+        - Esempio: `/MyHttpTrigger?action=modifica&id=1&text=Nuova%20nota%20aggiornata`
+    4. Elimina Nota
+        - Descrizione: Elimina una nota esistente utilizzando l'ID.
+        - Parametri:
+            - `action=cancella`
+            - `id=<ID della nota>`
+        - Esempio: `/MyHttpTrigger?action=cancella&id=1`
+    5. Elenco Completo
+        - Descrizione: Recupera l'elenco completo delle note salvate.
+        - Parametri:
+            - `action=elenco`
+        - Esempio: `/MyHttpTrigger?action=elenco`\nPer favore, assicurati di fornire i parametri corretti rispetto all'azione desiderata."""
+        return func.HttpResponse(guida, mimetype="text/plain", status_code=400)
 
     # Azione: Cerca Note
     if action == "cerca":
