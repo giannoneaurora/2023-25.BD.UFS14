@@ -1,5 +1,4 @@
 from jsonschema import validate
-import pandas as pd
 import os
 from main import aggiungi_note, get_all_notes, modifica_note, cancella_note, cerca_note, save_notes_to_file
 
