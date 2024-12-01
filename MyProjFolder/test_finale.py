@@ -45,12 +45,20 @@ def test_save_notes_to_file():
     if os.path.exists(path):
         os.remove(path)
 
-def test_get_all_notes(path):
-    path = 'test_note.json'  
-    notes = get_all_notes()
-    assert isinstance(notes, list)
-    for note in notes:
-        assert validate_wrapper(note, note_schema) == True
+def test_get_all_notes():
+    test_file = 'test_note.json'
+    sample_notes = [
+        {"ID": 1, "Nota": "Questa è la prima nota"},
+        {"ID": 2, "Nota": "Questa è la seconda nota"}
+    ]
+    with open(test_file, 'w', encoding='utf-8') as f:
+        json.dump(sample_notes, f, ensure_ascii=False, indent=4)
+    notes = get_all_notes(test_file)
+    
+    assert notes == sample_notes, f"Expected {sample_notes}, but got {notes}"
+    if os.path.exists(test_file):
+        os.remove(test_file)
+
 
 def test_aggiungi_note():
     result = aggiungi_note("Nuova nota di test", "test_note.json")

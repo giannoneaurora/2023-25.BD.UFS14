@@ -1,11 +1,7 @@
 import azure.functions as func
 import logging
 import json
-import os
-import pandas as pd
-from main import  cerca_note, aggiungi_note, modifica_note, cancella_note, get_all_notes
-
-
+from main import  cerca_note, aggiungi_note, modifica_note, cancella_note
 
 app = func.FunctionApp()
 
@@ -13,8 +9,6 @@ app = func.FunctionApp()
 def MyHttpTrigger(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    
-     # Azione da eseguire (search, add, update, delete)
     action = req.params.get("action")
     if not action:
         guida = """Benvenuto nel gestore note. Ecco una guida per l'utilizzo:\nAzioni disponibili:
