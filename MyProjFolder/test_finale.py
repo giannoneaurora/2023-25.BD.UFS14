@@ -1,7 +1,7 @@
 from jsonschema import validate
 import os
-import pandas as pd
-from main import aggiungi_note, get_all_notes, modifica_note, cancella_note, cerca_note, save_notes_to_file
+import json
+from main import aggiungi_note, modifica_note, cancella_note, cerca_note, save_notes_to_json, get_all_notes
 
 note_schema = {
     "type": "object",
@@ -21,7 +21,6 @@ message_schema = {
     "required": ["message"]
 }
 
-
 def validate_wrapper(instance, schema):
     try:
         validate(instance=instance, schema=schema)
@@ -31,66 +30,64 @@ def validate_wrapper(instance, schema):
         return False
 
 def test_save_notes_to_file():
-    # Crea un DataFrame di esempio per il test
-    data = {'id': [1, 2, 3], 'text': ['Nota 1', 'Nota 2', 'Nota 3']}
-    notes_df = pd.DataFrame(data)
-    path = 'test_note.csv'  # Percorso del file di test
-
-    save_notes_to_file(notes_df, path)
-
+    notes = [
+        {"ID": 1, "Nota": "Nota 1"},
+        {"ID": 2, "Nota": "Nota 2"},
+        {"ID": 3, "Nota": "Nota 3"}
+    ]
+    path = 'test_note.json'  
+    save_notes_to_json(notes, path)
     assert os.path.exists(path), "Il file non è stato creato!"
-
-    saved_df = pd.read_csv(path)
-
-    pd.testing.assert_frame_equal(notes_df, saved_df), "I dati nel file non corrispondono."
+    with open(path, 'r') as file:
+        saved_notes = json.load(file)
+    assert saved_notes == notes, "I dati nel file non corrispondono."
 
     if os.path.exists(path):
         os.remove(path)
 
-
-def test_get_all_notes():
+def test_get_all_notes(path):
+    path = 'test_note.json'  
     notes = get_all_notes()
     assert isinstance(notes, list)
     for note in notes:
         assert validate_wrapper(note, note_schema) == True
 
-
 def test_aggiungi_note():
-    result = aggiungi_note("Nuova nota di test")
+    result = aggiungi_note("Nuova nota di test", "test_note.json")
     assert validate_wrapper(result, note_schema) == True
     assert result["Nota"] == "Nuova nota di test"
 
 def test_modifica_note_success():
-    new_note = aggiungi_note("Nota da aggiornare")
-    result = modifica_note(new_note["ID"], "Nota aggiornata")
+    new_note = aggiungi_note("Nota da aggiornare", "test_note.json")
+    result = modifica_note(new_note["ID"], "Nota aggiornata", "test_note.json")
     assert validate_wrapper(result, note_schema) == True
     assert result["Nota"] == "Nota aggiornata"
 
 def test_modifica_note_fail():
-    result = modifica_note(999, "Nota inesistente")
+    result = modifica_note(999, "Nota inesistente", "test_note.json")
     assert "error" in result
     assert result["error"] == "Nota non trovata."
 
 def test_cancella_note_success():
-    new_note = aggiungi_note("Nota da eliminare")
-    result = cancella_note(new_note["ID"])
+    new_note = aggiungi_note("Nota da eliminare", "test_note.json")
+    result = cancella_note(new_note["ID"], "test_note.json")
     assert validate_wrapper(result, message_schema) == True
     assert result["message"] == f"Nota con ID {new_note['ID']} eliminata."
 
 def test_cancella_note_fail():
-    result = cancella_note(999)
+    result = cancella_note(999, "test_note.json")
     assert "error" in result
     assert result["error"] == "Nota non trovata."
 
 def test_cerca_note_testo():
-    aggiungi_note("Nota per test ricerca testo")
-    result = cerca_note(text_param="test ricerca")
+    aggiungi_note("Nota per test ricerca testo", "test_note.json")
+    result = cerca_note(text_param="test ricerca", path="test_note.json")
     assert isinstance(result, list)
     assert len(result) > 0
     assert any("test ricerca" in note["Nota"] for note in result)
 
 def test_cerca_note_testo_non_valido():
-    result = cerca_note(text_param="test non esistente")
+    result = cerca_note(text_param="test non esistente", path="test_note.json")
     assert isinstance(result, dict)
     assert "error" in result
     assert result["error"] == "Nessuna nota trovata."

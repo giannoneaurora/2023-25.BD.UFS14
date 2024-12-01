@@ -1,56 +1,78 @@
-import pandas as pd
+import json
 import os
 
-data = {
-    "ID": [1, 2, 3],
-    "Nota": ["Questa è la prima nota", "Seconda nota di esempio", "Terza nota importante"]
-}
-notes_df = pd.DataFrame(data)
+path = "/workspaces/2023-25.BD.UFS14/MyProjFolder/note.json"  
+# Funzione per caricare le note da un file JSON
+def load_notes_from_json(path):
+    if os.path.exists(path):
+        with open(path, 'r') as file:
+            return json.load(file)
+    return []
 
-path = "note.csv"
+# Funzione per salvare le note in un file JSON
+def save_notes_to_json(notes, path):
+    with open(path, 'w') as file:
+        json.dump(notes, file, indent=4)
 
-if os.path.exists(path):
-    notes_df = pd.read_csv(path)
 
-def save_notes_to_file(notes_df, path):
-    notes_df.to_csv(path, index=False)
 
-def get_all_notes():
-    return notes_df.to_dict(orient="records")
-
-def cerca_note(id_param=None, text_param=None):
-    filtered_notes = notes_df
+def cerca_note(id_param=None, text_param=None, path="notes.json"):
+    notes = load_notes_from_json(path)
+    
+    # Filtrare per ID
     if id_param:
         try:
-            filtered_notes = filtered_notes[filtered_notes["ID"] == int(id_param)]
+            notes = [note for note in notes if note["ID"] == int(id_param)]
         except ValueError:
             return {"error": "Il parametro ID deve essere un numero."}
+    
+    # Filtrare per testo
     if text_param:
-        filtered_notes = filtered_notes[filtered_notes["Nota"].str.contains(text_param, case=False, na=False)]
-    if filtered_notes.empty:
+        notes = [note for note in notes if text_param.lower() in note["Nota"].lower()]
+    
+    if not notes:
         return {"error": "Nessuna nota trovata."}
-    return filtered_notes.to_dict(orient="records")
+    
+    return notes
 
-def aggiungi_note(note_text):
-    global notes_df
-    new_id = notes_df["ID"].max() + 1 if not notes_df.empty else 1
+
+
+def aggiungi_note(note_text, path="notes.json"):
+    notes = load_notes_from_json(path)
+    
+    # Calcolare il nuovo ID
+    new_id = max([note["ID"] for note in notes], default=0) + 1
     new_note = {"ID": new_id, "Nota": note_text}
-    notes_df = pd.concat([notes_df, pd.DataFrame([new_note])], ignore_index=True)
-    save_notes_to_file(notes_df, path)  # Salva la modifica
-    return {"ID": int(new_note["ID"]), "Nota": new_note["Nota"]}
+    
+    notes.append(new_note)
+    save_notes_to_json(notes, path)  # Salva la modifica
+    
+    return {"ID": new_id, "Nota": note_text}
 
-def modifica_note(note_id, new_text):
-    global notes_df
-    if note_id not in notes_df["ID"].values:
+def modifica_note(note_id, new_text, path="notes.json"):
+    notes = load_notes_from_json(path)
+    
+    # Trovare la nota con l'ID specificato
+    note_to_modify = next((note for note in notes if note["ID"] == note_id), None)
+    if note_to_modify is None:
         return {"error": "Nota non trovata."}
-    notes_df.loc[notes_df["ID"] == note_id, "Nota"] = new_text
-    save_notes_to_file(notes_df, path)  # Salva la modifica
-    return {"ID": int(note_id), "Nota": new_text}
+    
+    # Modificare il testo della nota
+    note_to_modify["Nota"] = new_text
+    save_notes_to_json(notes, path)  # Salva la modifica
+    
+    return {"ID": note_id, "Nota": new_text}
 
-def cancella_note(note_id):
-    global notes_df
-    if note_id not in notes_df["ID"].values:
+def cancella_note(note_id, path="notes.json"):
+    notes = load_notes_from_json(path)
+    
+    # Verificare se la nota esiste
+    if not any(note["ID"] == note_id for note in notes):
         return {"error": "Nota non trovata."}
-    notes_df = notes_df[notes_df["ID"] != note_id]
-    save_notes_to_file(notes_df, path)  # Salva la modifica
+    
+    # Eliminare la nota con l'ID specificato
+    notes = [note for note in notes if note["ID"] != note_id]
+    save_notes_to_json(notes, path)  # Salva la modifica
+    
     return {"message": f"Nota con ID {note_id} eliminata."}
+

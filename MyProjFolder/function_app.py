@@ -1,18 +1,23 @@
 import azure.functions as func
 import logging
 import json
+import os
+import pandas as pd
 from main import  cerca_note, aggiungi_note, modifica_note, cancella_note, get_all_notes
+
+
 
 app = func.FunctionApp()
 
 @app.route(route="MyHttpTrigger", auth_level=func.AuthLevel.ANONYMOUS)
 def MyHttpTrigger(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
+
     
      # Azione da eseguire (search, add, update, delete)
     action = req.params.get("action")
     if not action:
-        guida = """\nBenvenuto nel gestore note. Ecco una guida per l'utilizzo:\nAzioni disponibili:
+        guida = """Benvenuto nel gestore note. Ecco una guida per l'utilizzo:\nAzioni disponibili:
     1. Cerca Note
         - Descrizione: Cerca una nota utilizzando l'ID o parte del testo.
         - Parametri:
@@ -57,11 +62,13 @@ def MyHttpTrigger(req: func.HttpRequest) -> func.HttpResponse:
     if action == "aggiungi":
         try:
             note_text = req.params.get("text")
+            logging.info(f"Parametro 'text' ricevuto: {note_text}")
             if not note_text:
                 raise ValueError("Il testo della nota è obbligatorio.")
             result = aggiungi_note(note_text)
             return func.HttpResponse(json.dumps(result, ensure_ascii=False), mimetype="application/json", status_code=201)
         except ValueError as e:
+            logging.error(f"Errore: {e}")
             return func.HttpResponse(str(e), status_code=400)
 
     # Azione: Modifica Nota
