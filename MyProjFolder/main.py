@@ -22,7 +22,7 @@ def get_all_notes(path):
 
 
 
-def cerca_note(id_param=None, text_param=None, path="notes.json"):
+def cerca_note(id_param=None, text_param=None,path='note.json'):
     notes = load_notes_from_json(path)
     if id_param:
         try:
@@ -38,7 +38,7 @@ def cerca_note(id_param=None, text_param=None, path="notes.json"):
 
 
 
-def aggiungi_note(note_text, path="notes.json"):
+def aggiungi_note(note_text, path):
     notes = load_notes_from_json(path)
     new_id = max([note["ID"] for note in notes], default=0) + 1
     new_note = {"ID": new_id, "Nota": note_text}
@@ -47,7 +47,7 @@ def aggiungi_note(note_text, path="notes.json"):
     
     return {"ID": new_id, "Nota": note_text}
 
-def modifica_note(note_id, new_text, path="notes.json"):
+def modifica_note(note_id, new_text, path):
     notes = load_notes_from_json(path)
     note_to_modify = next((note for note in notes if note["ID"] == note_id), None)
     if note_to_modify is None:
@@ -57,7 +57,7 @@ def modifica_note(note_id, new_text, path="notes.json"):
     
     return {"ID": note_id, "Nota": new_text}
 
-def cancella_note(note_id, path="notes.json"):
+def cancella_note(note_id, path):
     notes = load_notes_from_json(path)
     if not any(note["ID"] == note_id for note in notes):
         return {"error": "Nota non trovata."}
