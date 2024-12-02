@@ -1,5 +1,6 @@
 import json
 import os
+import logging 
 
 path = "/workspaces/2023-25.BD.UFS14/MyProjFolder/note.json"  
 
@@ -38,12 +39,20 @@ def cerca_note(id_param=None, text_param=None,path='note.json'):
 
 
 
-def aggiungi_note(note_text, path):
+def aggiungi_note(note_text, path="notes.json"):
     notes = load_notes_from_json(path)
+    logging.info(f"Note attuali: {notes}")
+
     new_id = max([note["ID"] for note in notes], default=0) + 1
     new_note = {"ID": new_id, "Nota": note_text}
+    logging.info(f"Aggiunta nuova nota: {new_note}")
+
     notes.append(new_note)
     save_notes_to_json(notes, path)  
+
+    logging.info(f"Note salvate: {notes}")
+    return {"ID": new_id, "Nota": note_text}
+
     
     return {"ID": new_id, "Nota": note_text}
 
